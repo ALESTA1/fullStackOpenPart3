@@ -1,6 +1,13 @@
 const express = require('express')
-const app = express()
-
+var app = express()
+const bodyParser = require('body-parser')
+const morgan = require('morgan')
+const cors = require('cors')
+app.use(cors())
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
+morgan.token('body', (req, res) => JSON.stringify(req.body));
+app.use(morgan(':method :url :response-time :body'))
 var persons = [
     { 
       "id": 1,
@@ -55,12 +62,19 @@ app.delete('/api/persons/:id', (request, response) => {
     response.status(204).end()
 })
 app.post('/api/persons', (request, response) => {
+    console.log(request.body)
     const person = request.body
-    //persons.concat(person)
-    console.log(person)
+    persons.forEach(e=>{
+
+        if(e.name===person.name){
+            response.status(400).json({error:"entry already exists with given name"})
+        }
+    })
+    person.id = Math.floor(Math.random()*(10000));
+    persons = persons.concat(person)
     response.json(person)
 })
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 app.listen(PORT,()=>{
     console.log(`server running on port ${PORT}`)
 })
