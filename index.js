@@ -1,4 +1,5 @@
 const express = require('express')
+require('dotenv').config()
 var app = express()
 const bodyParser = require('body-parser')
 const morgan = require('morgan')
