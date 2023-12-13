@@ -8,31 +8,58 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 morgan.token('body', (req, res) => JSON.stringify(req.body));
 app.use(morgan(':method :url :response-time :body'))
-var persons = [
-    { 
-      "id": 1,
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": 2,
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": 3,
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": 4,
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
 
+
+import mongoose from 'mongoose'
+
+const password = process.argv[2];
+
+const url = `mongodb+srv://alesta:${password}@phonebookdb.j8jkarc.mongodb.net/?retryWrites=true&w=majority`
+
+mongoose.set('strictQuery',false)
+mongoose.connect(url)
+
+
+const phoneBookSchema = new mongoose.Schema({
+
+    name : String,
+    number: String
+})
+
+const Person = mongoose.model('Person',phoneBookSchema)
+
+if(process.argv.length==3){
+
+    Person.find({}).then(result=>{
+
+        result.forEach(e=>{
+            console.log(e)
+        })
+        mongoose.connection.close()
+        process.exit(1)
+    })
+}
+
+const person = new Person({
+    name : process.argv[3],
+    number : process.argv[4]
+})
+
+person.save().then(result=>{
+    console.log("person saved")
+    mongoose.connection.close()
+})
 app.get('/api/persons',(request,response)=>{
-    response.json(persons)
+
+    Person.find({}).then(result=>{
+
+        response.json(result)
+        
+    })
+    .catch(
+        response.status(404).json({error:'coudnt retrieve from DB'})
+    )
+    
 })
 app.get('/info',(request,response)=>{
 
