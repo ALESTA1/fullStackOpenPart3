@@ -10,10 +10,22 @@ app.use(bodyParser.json())
 morgan.token('body', (req, res) => JSON.stringify(req.body));
 app.use(morgan(':method :url :response-time :body'))
 
+const errorHandler = (error,req,res,next) =>{
 
+    console.log(error)
+
+    if(error.name==='CastError'){
+        return response.status(400).send({error: 'malformatted id'});
+    }
+
+    next(error)
+
+}
+
+app.use(errorHandler)
 const Person = require('./models/person')
 
-app.get('/api/persons',(request,response)=>{
+app.get('/api/persons',(request,response,next)=>{
 
     Person.find({}).then(result=>{
 
@@ -21,7 +33,7 @@ app.get('/api/persons',(request,response)=>{
     })
     
 })
-app.get('/info',(request,response)=>{
+app.get('/info',(request,response,next)=>{
 
    
     Person.find({}).then(result=>{
@@ -32,14 +44,19 @@ app.get('/info',(request,response)=>{
         response.json(res);
         
     })
+    
    
 })
 
-app.get('/api/persons/:id',(request,response)=>{
+app.get('/api/persons/:id',(request,response,next)=>{
 
     Person.findById(request.params.id).then(person => {
+        if(person)
         response.json(person)
+        else
+            response.status(404).end()
     })
+    .catch(error=>next(error))
 })
 
 app.delete('/api/persons/:id', (request, response) => {
@@ -57,14 +74,17 @@ app.post('/api/persons', (request, response) => {
     return response.status(400).json({ error: 'content missing' })
   }
 
-  const person = new Person({
-    name : body.name,
-    number : body.name
-  })
+  Person.findOneAndUpdate({name:body.name},{$set:{number:body.number}},{upsert :true})
+  .then(
 
-  person.save().then(savedPerson => {
-    response.json(savedPerson)
-  })
+    response.status(200).send('updated records')
+  )
+  .catch( err=>{
+
+    console.log(err)
+  }
+  )
+  
 })
 const PORT = process.env.PORT || 3001
 app.listen(PORT,()=>{
