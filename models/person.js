@@ -32,6 +32,4 @@ phoneBookSchema.set('toJSON', {
       delete returnedObject.__v
     }
 })
-
-
 module.exports =  mongoose.model('Person',phoneBookSchema)
